@@ -10,7 +10,10 @@ module.exports = {
         let r = [];
         let resp = new Array();
         await db.query(sql, [req.params.UserId, req.params.UserId], (err, response) => {
-            if (err) throw err
+            if (err) {
+                res.sendStatus(500);
+                return;
+            }
             // let resp = new Array();
             if (response == []){
                 res.json({message : 'Chưa có bạn bè'})
@@ -36,13 +39,17 @@ module.exports = {
                     }
                         console.log('resp', resp) 
                 })  
-                var callback = function(){
-                    return res.json(resp)
-                } 
-                setTimeout(callback, 1000)
-                
-                    
-                
+                // var callback = function(){
+                //     return res.json(resp)
+                // } 
+                // setTimeout(callback, 1000)
+                var callback = setInterval(function () { 
+                    if (resp.length == response.length) { 
+                        res.json(resp)
+                        clearInterval(callback)
+                        return;
+                    } 
+                }, 1000); 
             }
         })
     },
