@@ -24,7 +24,7 @@ module.exports = {
                     if(element.UserIdRec == req.params.UserId){
                         await db.query(s, [element.UserIdSend], (err, response) => {
                             if (err) throw err
-                            resp.push(response)
+                            resp.push(response[0])
                             let a = resp
                             console.log('ban',response)
                         })
@@ -32,24 +32,66 @@ module.exports = {
                         console.log(element)
                         await db.query(s, [element.UserIdRec], (err, response) => {
                             if (err) throw err
-                            resp.push(response)
+                            resp.push(response[0])
                             let a = resp
                             console.log('bạn',response)
                         })
                     }
                         console.log('resp', resp) 
                 })  
-                // var callback = function(){
-                //     return res.json(resp)
-                // } 
-                // setTimeout(callback, 1000)
+                
                 var callback = setInterval(function () { 
                     if (resp.length == response.length) { 
                         res.json(resp)
                         clearInterval(callback)
                         return;
                     } 
-                }, 1000); 
+                }, 200); 
+            }
+        })
+    },
+    getNotFriend: async (req, res) => {
+        let sql = 'SELECT * FROM relationship  WHERE UserIdRec = ? OR UserIdSend = ?'
+        let r = [];
+        let resp = new Array();
+        await db.query(sql, [req.params.UserId, req.params.UserId], (err, response) => {
+            if (err) {
+                res.sendStatus(500);
+                return;
+            }
+            // let resp = new Array();
+            if (response == []){
+                res.json({message : 'Chưa có bạn bè'})
+                console.log('k có bạn bè')
+            }else {
+                let s = 'SELECT * FROM user  WHERE UserId = ?'
+                response.forEach(async (element) => {
+                    if(element.UserIdRec == req.params.UserId){
+                        await db.query(s, [element.UserIdSend], (err, response) => {
+                            if (err) throw err
+                            resp.push(response[0].UserId)
+                        })
+                    }else{
+                        console.log(element)
+                        await db.query(s, [element.UserIdRec], (err, response) => {
+                            if (err) throw err
+                            resp.push(response[0].UserId)
+                        })
+                    }
+                        console.log('resp', resp) 
+                })  
+                let s2 = 'SElECT * FROM user WHERE UserId NOT IN (?)'
+                var callback = setInterval(async function () { 
+                    if (resp.length == response.length) { 
+                        await resp.push(req.params.UserId)
+                        await db.query(s2, [resp], (err, response) => {
+                            if (err) throw err
+                            res.json(response)
+                        })
+                    }
+                    clearInterval(callback)
+                    return;
+                }, 200); 
             }
         })
     },
